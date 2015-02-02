@@ -1,0 +1,27 @@
+{
+  "name": "stats",
+  "main": "stats.js",
+  "version": "0.0.1",
+  "authors": [
+    "gschutz <guilherme@gschutz.com>"
+  ],
+  "moduleType": [
+    "amd",
+    "es6",
+    "globals",
+    "node"
+  ],
+  "keywords": [
+    "statistics",
+    "data",
+    "econometric"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
