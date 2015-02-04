@@ -21,6 +21,7 @@
     "gulp-htmlbuild": "^0.3.0",
     "gulp-livereload": "^2.1.0",
     "gulp-uglify": "^0.3.1",
+    "jsdoc": "^3.3.0-beta1",
     "opn": "^1.0.0",
     "rimraf": "^2.2.8",
     "serve-index": "^1.2.0",

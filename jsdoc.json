@@ -1,0 +1,12 @@
+{
+	"plugins": ["plugins/markdown"],
+	"templates": {
+		"applicationName": "Stats.JS",
+		"meta": {
+			"title": "Stats.JS",
+			"description": "description goes here!!",
+			"keyword": ""
+		},
+		"linenums": true
+	}
+}

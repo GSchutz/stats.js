@@ -4,3 +4,7 @@ tmp/
 dist/
 build/
 *.log
+
+
+# Remover after first public version
+docs/
