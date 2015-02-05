@@ -25,6 +25,10 @@
 	var PRECISION = 10;
 
 
+  var NEGATIVE_INFINITY = Number.NEGATIVE_INFINITY,
+      POSITIVE_INFINITY = Number.POSITIVE_INFINITY;
+
+
 	// chain is a object/array/string/number, any value that can be manipulated by Stats
 	
 	function StatsWrapper(value, chainAll, actions) {
@@ -73,6 +77,16 @@
 	 * @param {...*} [*] Any value.
 	 *
 	 * @return {Array} Returns an `array` with all parameters linearized.
+	 *
+	 * @example
+	 *
+	 * var data = [5, [4, 7], {"0": 1}];
+	 * 
+	 * var linearized = st(data).linearize(12, [34]);
+	 * 
+	 * console.log(linearized.value());
+	 * // => [5, 4, 7, 1, 12, 34]
+	 * 
 	 */
 	function linearize() {
 		var args = _.toArray(arguments),
@@ -95,13 +109,20 @@
 		return r;
 	}
 
-	function baseOperator(a, b, fn) {
+	function baseOperator(a, b, fn, identity) {
+		identity = identity || 0;
+
+		if (_.isFunction(b)) {
+			fn = b;
+			b = 1;
+		}
+
 		if (_.isFinite(a) && _.isFinite(b)) {
 			return fn(a, b);
 		}
 
 		if (_.isArray(a) && !b) {
-			var r = 0;
+			var r = identity;
 			a = linearize(a);
 
     	_.each(a, function(c, i){
@@ -247,7 +268,7 @@
 	function divide(a, b) {
 		return baseOperator(a, b, function(a, b) {
 			return a / b;
-		});
+		}, 1);
 	}
 
 	/**
@@ -288,8 +309,157 @@
 	function multiply(a, b) {
 		return baseOperator(a, b, function(a, b) {
 			return a * b;
+		}, 1);
+	}
+
+	function ln(a) {
+		return baseOperator(a, function(a) {
+			return Math.log(a);
 		});
 	}
+
+	/**
+	 * Calculates the logarithm of `a` to base `b`. If no base is passed, is
+	 * assumed the natural logarithm (with base `e`).
+	 *
+	 * @method   log
+	 *
+	 * @memberOf stats
+	 *
+	 * @category math
+	 *
+	 * @param    {(number|array)} a The number (or list) to calculate.
+	 * @param    {(number|array)} b The base.
+	 *
+	 * @return   {(number|array)}   The same type of `a`.
+	 */
+	function log(a, b) {
+		if (b === undefined)
+			return ln(a);
+
+		return baseOperator(a, b, function(a, b) {
+			return Math.log(a) / Math.log(b);
+		});
+	}
+
+	function pow(a, degree) {
+		return baseOperator(a, function(a) {
+			return Math.pow(a, degree);
+		});
+	}
+
+	function root(a, degree) {
+		return baseOperator(a, function(a) {
+			return Math.pow(a, 1 / degree);
+		});
+	}
+
+	function sqrt(a) {
+		return baseOperator(a, function(a) {
+			return Math.sqrt(a);
+		});
+	}
+
+	function size(a) {
+		a = linearize(a);
+
+		return a.length;
+	}
+
+
+	//////////////////////
+	// STATISTICS START //
+	//////////////////////
+
+	function MeanMethods(value) {
+		this.__wrapped__ = _.clone(value);
+	}
+
+	/**
+	 * Retrieve the average for a data set. If `weight` is provided, calculates
+	 * the weighted average.
+	 *
+	 * @method   mean
+	 *
+	 * @memberOf stats
+	 *
+	 * @category statistic
+	 *
+	 * @param    {array} x      The data set to be calculated.
+	 * @param    {array=} [weight] The weight set.
+	 *
+	 * @return   {number}        Returns the average of `x`.
+	 *
+	 * @example
+	 *
+	 * var age = [19, 22, 18, 36, 25];
+	 * 
+	 * var mean_age = st(age).mean();
+	 * 
+	 * console.log(mean_age.value());
+	 * // => 24
+	 * 
+	 * // we can set a weight, or the amount of each 'age' occurrence
+	 * var weight = [2, 1, 2, 5, 3];
+	 * 
+	 * var mean_age = st(age).mean(weight);
+	 * 
+	 * console.log(mean_age.value());
+	 * // => 27
+	 * 
+	 */
+	function mean(x, weight) {
+		x = linearize(x);
+
+		if (weight === undefined) {
+			return sum(x) / x.length;
+		}
+
+		weight = linearize(weight);
+
+		var total_weight = sum(weight);
+
+		return sum(baseOperator(x, weight, function(x, w) {
+			return x * w;
+		})) / total_weight;
+	}
+
+
+	function mean_geometric(x, weight) {
+
+		console.log(x, weight);
+
+		x = linearize(x);
+
+		if (weight === undefined) {
+			return root(multiply(x), x.length);
+		}
+
+		weight = linearize(weight);
+
+		var total_weight = sum(weight);
+
+		return sum(baseOperator(x, weight, function(x, w) {
+			return x * w;
+		})) / total_weight;
+	}
+
+	//MeanWrapper.prototype = mean.prototype;
+
+	var _mean = {};
+
+	alias(mean_geometric, ['geometric'], _mean);
+
+	mixin.call(mean, mean, _mean, true);
+
+	//_.mixin({mean: mean});
+
+	//mean.prototype = MeanWrapper.prototype;
+
+	////////////////////
+	// STATISTICS END //
+	////////////////////
+
 
 	/**
 	 * Just round the variable passed to the passed precision (default is 10 decimals).
@@ -326,13 +496,16 @@
 		// i.e., for complex calculus, with bigger numbers, this entire function
 		// needs to be revised.
 
+		if (num === NEGATIVE_INFINITY || num === POSITIVE_INFINITY)
+			return num;
+
 		//  This is a workaround for round up with no decimals.
 		var rounded, original_num = num;
 
 		num = parseFloat(num);
 
 		if( precision === 0 )
-			num = roundTo(num/10, 1) * 10;
+			num = baseRound(num/10, 1) * 10;
 
 		precision = precision || PRECISION;
 		rounded = +(Math.round(num.toFixed(8) + "e+" + precision)  + "e-" + precision);
@@ -496,6 +669,9 @@
 		} else if (_.isObject(options) && 'chain' in options) {
 			chain = options.chain;
 		}
+
+		options = options || {};
+
 		// set each method (in source) for object
 		_.each(source, function(prop, methodName) {
 			// this will set the methods to the global stats
@@ -505,8 +681,12 @@
 			// But now, we already have a collection defined, 
 			// so we just pass it to the original function;
 			// object.prototype[methodName] = prop;
-			object.prototype[methodName] = (function(prop){
-				return function() {
+			object.prototype[methodName] = (function(prop, options){
+				function mixed() {
+					if (_.isEmpty(arguments))
+						arguments = options.args;
+
+					console.log(arguments, object)
 					// __wrapped__ is just one (or) the first argument,
 					// so we pass to the first arguments;
 					var chainAll = this.__chain__;
@@ -536,40 +716,78 @@
 					Array.prototype.push.apply(args, arguments);
 
 					return prop.apply(this, args);
-				};
-			}(prop));
+				}
+
+				if (!_.isEmpty(prop.prototype)) {
+					mixin.call(this, mixed, prop.prototype, {chain: true, args: arguments});
+
+					return mixed;
+				} else {
+					return mixed;
+				}
+
+				return mixed;
+
+				//F.prototype = prop.prototype;
+
+			}(prop, options));
 
 		}, object);
 
 		return object;
 	}
 
+	function alias(fn, aliases, obj) {
 
-	/** First we define only the Chainable methods */
+		if (!_.isObject(obj) || !fn)
+			return;
+
+		_.each(aliases, function(a) {
+			this[a] = fn;
+		}, obj);
+
+		return obj;
+	}
+
+
+	/** First we define only the global methods */
 
 	var st = {};
 
-	st.sum = sum;
-	st.subtract = subtract;
-	st.divide = divide;
-	st.multiply = multiply;
+	alias(sum,							['sum'], st);
+	alias(subtract,					['subtract'], st);
+	alias(multiply,					['multiply'], st);
+	alias(divide,						['divide'], st);
+	alias(ln,								['ln'], st);
+	alias(log,							['log'], st);
+	alias(sqrt,							['sqrt', 'squareRoot'], st);
+	alias(root,							['root', 'rt'], st);
+	alias(pow,							['pow', 'power'], st);
 
-	st.round = round;
+	//st.mean.prototype = mean.prototype;
 
-	st.value = value;
+	alias(linearize,				['linearize'], st);
+	alias(round,						['round'], st);
 
 	mixin.call(stats, stats, st);
 
-	/** And only after iteration, we added the non-chainable methods */
+	/** And only after, we added the chainable methods */
 
 	var _st = {};
 
-	_st.value = value;
-	_st.copy = copy;
-	_st.aggregate = aggregate;
-	_st.dispatch = dispatch;
+	//alias(mean,							['mean', 'average', 'expectation', 'ev'], _st);
+	
+	_st.mean = mean;
+
+	alias(value,						['value'], _st);
+	alias(copy,							['copy', 'clone'], _st);
+	alias(aggregate,				['aggregate'], _st);
+	alias(dispatch,					['dispatch'], _st);
 
 	mixin.call(stats, stats, _st, false);
+
+
+	//mixin.call(stats.mean, stats.mean, mean.prototype, false);
 
 
 	// extend the Wrapper
