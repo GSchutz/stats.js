@@ -156,8 +156,10 @@
 
     	_.each(b, function(c, i){
     		if (_.isFinite(c))
-    			a = fn(a, c);
+    			b[i] = fn(a, b[i]);
   		});
+
+  		return b;
 		}
     
     return a;
@@ -272,6 +274,25 @@
 	}
 
 	/**
+	 * Short method for inverse a number (`1 / a`).
+	 *
+	 * Note: This method is different from `reverse`.
+	 *
+	 * @method   inverse
+	 *
+	 * @memberOf stats
+	 *
+	 * @category math
+	 *
+	 * @param    {(number|array)} a The number or list to be inverted.
+	 *
+	 * @return   {(number|array)}   The inverse of `a`, or a list with each `a` inverted values.
+	 */
+	function inverse(a) {
+		return divide(1, a);
+	}
+
+	/**
 	 * Take element `a` (or each element in `a`), and multiply by `b` (or each
 	 * element in `b`).
 	 *
@@ -312,6 +333,19 @@
 		}, 1);
 	}
 
+	/**
+	 * Retrieve the natural logarithm of a `number`.
+	 *
+	 * @method   ln
+	 *
+	 * @memberOf stats
+	 *
+	 * @category math
+	 *
+	 * @param    {(number|array)} a The `number`/`list` to be calculated.
+	 *
+	 * @return   {(number|array)}   All `a`'s natural logarithm.
+	 */
 	function ln(a) {
 		return baseOperator(a, function(a) {
 			return Math.log(a);
@@ -331,7 +365,7 @@
 	 * @param    {(number|array)} a The number (or list) to calculate.
 	 * @param    {(number|array)} b The base.
 	 *
-	 * @return   {(number|array)}   The same type of `a`.
+	 * @return   {(number|array)}   A `number` (if `a` and `b` are a `number`), or a `list`.
 	 */
 	function log(a, b) {
 		if (b === undefined)
@@ -342,18 +376,79 @@
 		});
 	}
 
-	function pow(a, degree) {
-		return baseOperator(a, function(a) {
-			return Math.pow(a, degree);
+	/**
+	 * Exponentiation of a number `a` to the exponent `power`.
+	 *
+	 * @method   pow
+	 *
+	 * @memberOf stats
+	 *
+	 * @category math
+	 *
+	 * @param    {(number|array)} a      The base of an exponentiation.
+	 * @param    {(number|array)} power The exponent (or power).
+	 *
+	 * @return   {(number|array)}        Returns the result in a list or primitive `number`.
+	 */
+	function pow(a, power) {
+		return baseOperator(a, power, function(a, power) {
+			return Math.pow(a, power);
 		});
 	}
 
+	/**
+	 * The nth-root of a number.
+	 *
+	 * @method   root
+	 *
+	 * @memberOf stats
+	 *
+	 * @category math
+	 *
+	 * @param    {(number|array)} a      The number or list to be calculated.
+	 * @param    {(number|array)} degree The degree.
+	 *
+	 * @return   {(number|array)}        The result, number or list.
+	 *
+	 * @example
+	 *
+	 * var data = [256, 27, 49, 81, 3];
+	 * 
+	 * var roots = st(data).root(3);
+	 * 
+	 * console.log(roots.round(3).value());
+	 * // => [6.35, 3, 3.659, 4.327, 1.442]
+	 * 
+	 */
 	function root(a, degree) {
-		return baseOperator(a, function(a) {
+		return baseOperator(a, degree, function(a, degree) {
 			return Math.pow(a, 1 / degree);
 		});
 	}
 
+	/**
+	 * Short method for `root` for a degree of `2`, the square root.
+	 *
+	 * @method   sqrt
+	 *
+	 * @memberOf stats
+	 *
+	 * @category math
+	 *
+	 * @param    {(number|array)} a      The number or list to be calculated.
+	 *
+	 * @return   {(number|array)}        The result, number or list.
+	 *
+	 * @example
+	 * 
+	 * var data = [4, 9, 49, 81, 3];
+	 * 
+	 * var sqrt = st(data).sqrt();
+	 * 
+	 * console.log(sqrt.round(5).value());
+	 * // => [2, 3, 7, 9, 1.73205]
+	 * 
+	 */
 	function sqrt(a) {
 		return baseOperator(a, function(a) {
 			return Math.sqrt(a);
@@ -376,7 +471,7 @@
 	}
 
 	/**
-	 * Retrieve the average for a data set. If `weight` is provided, calculates
+	 * Retrieve the average for a data list. If `weight` is provided, calculates
 	 * the weighted average.
 	 *
 	 * @method   mean
@@ -424,10 +519,39 @@
 		})) / total_weight;
 	}
 
-
-	function mean_geometric(x, weight) {
-
-		console.log(x, weight);
+	/**
+	 * Calculate the geometric mean of a list.
+	 *
+	 * @method   geometricMean
+	 *
+	 * @memberOf stats
+	 *
+	 * @category statistic
+	 *
+	 * @param    {(number|array)}      x      The list to be calculated.
+	 * @param    {(number|array)}      weight An optional list of weights.
+	 *
+	 * @return   {number}             The geometric mean.
+	 *
+	 * @example
+	 *
+	 * var age = [19, 22, 18, 36, 25];
+	 * 
+	 * var g_mean_age = st(age).geometricMean();
+	 * 
+	 * console.log(g_mean_age.value());
+	 * // => 23.23476365971026
+	 * 
+	 * // we can set a weight, or the amount of each 'age' occurrence
+	 * var weight = [2, 1, 2, 5, 3];
+	 * 
+	 * var g_mean_age = st(age).geometricMean(weight);
+	 * 
+	 * console.log(g_mean_age.value());
+	 * // => 25.95929409829258
+	 * 
+	 */
+	function geometricMean(x, weight) {
 
 		x = linearize(x);
 
@@ -439,19 +563,86 @@
 
 		var total_weight = sum(weight);
 
-		return sum(baseOperator(x, weight, function(x, w) {
-			return x * w;
-		})) / total_weight;
+		return root( multiply( pow(x, weight) ), total_weight );
+	}	
+
+	/**
+	 * Calculates the harmonic mean of a list.
+	 *
+	 * @method   harmonicMean
+	 *
+	 * @memberOf stats
+	 *
+	 * @category statistic
+	 *
+	 * @param    {[type]}     x      [description]
+	 * @param    {[type]}     weight [description]
+	 *
+	 * @return   {[type]}            [description]
+	 *
+	 * @example
+	 * 
+	 * var age = [19, 22, 18, 36, 25];
+	 * 
+	 * var h_mean_age = st(age).harmonicMean();
+	 * 
+	 * console.log(h_mean_age.value());
+	 * // => 22.581574587625152
+	 * 
+	 * // we can set a weight, or the amount of each 'age' occurrence
+	 * var weight = [2, 1, 2, 5, 3];
+	 * 
+	 * var h_mean_age = st(age).harmonicMean(weight);
+	 * 
+	 * console.log(h_mean_age.value());
+	 * // => 24.965542589359554
+	 * 
+	 */
+	function harmonicMean(x, weight) {
+		x = linearize(x);
+
+		if (weight === undefined) {
+			return divide(x.length, sum(inverse(x)));
+		}
+
+		weight = linearize(weight);
+
+		var total_weight = sum(weight);
+
+		return divide(total_weight, sum(divide(weight, x)));
+	}
+
+	function variance(x, weight, type) {
+		x = linearize(x);
+
+		if (_.isString(weight) && type === undefined) {
+			type = weight;
+			weight = undefined;
+		} else if(type === undefined) {
+			type = 'unbiased';
+		}
+
+		var n = x.length;
+
+		if (type === 'unbiased') {
+			n = n - 1;
+		} else if (type === 'biased' || type === 'population') {
+			n = n;
+		}
+
+		var m = mean(x, weight);
+
+		if (weight === undefined) {
+			return divide( sum( pow( subtract( x, m ), 2 ) ), n);
+		}
+
+		return divide( sum( multiply( weight, subtract( x, m ) ) ), n);
 	}
 
 	//MeanWrapper.prototype = mean.prototype;
-
-	var _mean = {};
-
-	alias(mean_geometric, ['geometric'], _mean);
-
-	mixin.call(mean, mean, _mean, true);
-
+	//var _mean = {};
+	//alias(mean_geometric, ['geometric'], _mean);
+	//mixin.call(mean, mean, _mean, true);
 	//_.mixin({mean: mean});
 
 	//mean.prototype = MeanWrapper.prototype;
@@ -471,9 +662,20 @@
 	 * @category math
 	 *
 	 * @param    {(number|array)} value       Any `integer` or `float` number, or list of `number`.
-	 * @param    {number} precision A non-negative `integer`.
+	 * @param    {number} precision A non-negative `integer` that represents the quantity of decimals to be used (zero will return a integer value).
 	 *
 	 * @return   {(number|array)}           Return the same type of `value`.
+	 *
+	 * @example
+	 *
+	 * 
+	 * var data = [10.876, 11.9999, 55.000000001];
+	 * 
+	 * var rounded = st(data).round(2);
+	 * 
+	 * console.log(rounded.value());
+	 * // => [10.88, 12, 55]
+	 * 
 	 */
 	function round(value, precision) {
 		if (_.isFinite(value)) {
@@ -491,6 +693,19 @@
 		return value;
 	}
 
+	/**
+	 * An internal function to round only numbers.
+	 *
+	 * @private
+	 * @method   baseRound
+	 *
+	 * @category math
+	 *
+	 * @param    {number}  num       The `number` to be rounded.
+	 * @param    {number}  precision A non-negative `integer` that represents the quantity of decimals to be used (zero will return a integer value).
+	 *
+	 * @return   {number}            The rounded value.
+	 */
 	function baseRound(num, precision) {
 		// for maximum accuracy, the parameter number for toFixed should be bigger.
 		// i.e., for complex calculus, with bigger numbers, this entire function
@@ -660,7 +875,32 @@
 		return result;
 	}
 
-
+	/**
+	 * The mixin method is a more robust way for extending constructors and
+	 * objects. This implementation is based on the `lodash`, but with big
+	 * changes.
+	 *
+	 * 1. This `mixin` dosen't create a new instance of the last `Wrapper`. This
+	 * is justified for the **huge** better of performance by not creating.
+	 *
+	 * 2. This `mixin` dosen't save the actions applyed to the current
+	 * `Wrapper`, it acts like a `pipeline`, calculate and save in the current
+	 * `Wrapper`.
+	 *
+	 * 3. [TODO] This `mixin` can mix nested methods too.
+	 *
+	 * @method   mixin
+	 *
+	 * @memberOf utility
+	 *
+	 * @category utility
+	 *
+	 * @param    {(object|function)} object  Any `object` or function that will extend the source methods.
+	 * @param    {(object|function)} source  Any `object` or function that will be extended.
+	 * @param    {(object|boolean)=} options Optional options to be passed. If `true` will force chaining.
+	 *
+	 * @return   {(object|function)}         Return the `object` extended.
+	 */
 	function mixin(object, source, options) {
 		var chain = true;
 		
@@ -670,7 +910,7 @@
 			chain = options.chain;
 		}
 
-		options = options || {};
+		//options = options || {};
 
 		// set each method (in source) for object
 		_.each(source, function(prop, methodName) {
@@ -683,15 +923,14 @@
 			// object.prototype[methodName] = prop;
 			object.prototype[methodName] = (function(prop, options){
 				function mixed() {
-					if (_.isEmpty(arguments))
-						arguments = options.args;
+					//if (_.isEmpty(arguments))
+						//arguments = options.args;
 
-					console.log(arguments, object)
 					// __wrapped__ is just one (or) the first argument,
 					// so we pass to the first arguments;
 					var chainAll = this.__chain__;
 
-					if (chain || chainAll) {
+					if (chain || chainAll || !_.isEmpty(prop.prototype)) {
 						var args = [this.__wrapped__];
 						Array.prototype.push.apply(args, arguments);
 
@@ -717,9 +956,14 @@
 
 					return prop.apply(this, args);
 				}
+				
+				if (methodName == "geometric") {
+					console.log(arguments, this, object, source, options);
+				}
 
 				if (!_.isEmpty(prop.prototype)) {
-					mixin.call(this, mixed, prop.prototype, {chain: true, args: arguments});
+					console.log(prop, this, object, arguments);
+					//mixin.call(this, mixed, prop.prototype, {chain: false, args: arguments});
 
 					return mixed;
 				} else {
@@ -730,7 +974,7 @@
 
 				//F.prototype = prop.prototype;
 
-			}(prop, options));
+			}.call(object, prop, options));
 
 		}, object);
 
@@ -738,7 +982,6 @@
 	}
 
 	function alias(fn, aliases, obj) {
-
 		if (!_.isObject(obj) || !fn)
 			return;
 
@@ -764,20 +1007,20 @@
 	alias(root,							['root', 'rt'], st);
 	alias(pow,							['pow', 'power'], st);
 
-	//st.mean.prototype = mean.prototype;
+	alias(mean,							['mean', 'average', 'expectation', 'ev'], st);
+	alias(geometricMean,		['meanGeometric', 'geometricMean'], st);
+	alias(harmonicMean,			['meanHarmonic', 'harmonicMean'], st);
+
+	alias(variance,					['var', 'variance'], st);
 
 	alias(linearize,				['linearize'], st);
 	alias(round,						['round'], st);
 
-	mixin.call(stats, stats, st);
+	mixin.call(stats, stats, st, true);
 
 	/** And only after, we added the chainable methods */
 
 	var _st = {};
-
-	//alias(mean,							['mean', 'average', 'expectation', 'ev'], _st);
-	
-	_st.mean = mean;
 
 	alias(value,						['value'], _st);
 	alias(copy,							['copy', 'clone'], _st);
@@ -787,12 +1030,8 @@
 	mixin.call(stats, stats, _st, false);
 
 
-	//mixin.call(stats.mean, stats.mean, mean.prototype, false);
-
-
 	// extend the Wrapper
 	StatsWrapper.prototype = stats.prototype;
-
 
 
 	// Apply own methods to the stats and StatsWrapper

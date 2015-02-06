@@ -163,6 +163,20 @@ console.log(sqrt.round(5).value());
 
 
 ///////////////////
+// Example: root //
+///////////////////
+eg('root');
+
+var data = [256, 27, 49, 81, 3];
+
+var roots = st(data).root(3);
+
+console.log(roots.round(3).value());
+// => [6.35, 3, 3.659, 4.327, 1.442]
+
+
+
+///////////////////
 // Example: pow //
 ///////////////////
 eg('pow');
@@ -178,37 +192,75 @@ console.log(pow.round(5).value());
 ///////////////////
 // Example: mean //
 ///////////////////
-// eg('mean');
+eg('mean');
 
-// var age = [19, 22, 18, 36, 25];
+var age = [19, 22, 18, 36, 25];
 
-// var mean_age = st(age).mean();
+var mean_age = st(age).mean();
 
-// console.log(mean_age.value());
-// // => 24
+console.log(mean_age.value());
+// => 24
 
-// // we can set a weight, or the amount of each 'age' occurrence
-// var weight = [2, 1, 2, 5, 3];
+// we can set a weight, or the amount of each 'age' occurrence
+var weight = [2, 1, 2, 5, 3];
 
-// var mean_age = st(age).mean(weight);
+var mean_age = st(age).mean(weight);
 
-// console.log(mean_age.value());
+console.log(mean_age.value());
 // => 27
 
 /////////////////////////////
 // Example: mean.geometric //
 /////////////////////////////
-// eg('mean.geometric');
+eg('mean.geometric');
 
-// var age = [19, 22, 18, 36, 25];
+var age = [19, 22, 18, 36, 25];
 
-// var g_mean_age = st(age).mean.geometric();
+var g_mean_age = st(age).geometricMean();
 
-// console.log(g_mean_age.value());
-// => 24
+console.log(g_mean_age.value());
+// => 23.23476365971026
+
+// we can set a weight, or the amount of each 'age' occurrence
+var weight = [2, 1, 2, 5, 3];
+
+var g_mean_age = st(age).geometricMean(weight);
+
+console.log(g_mean_age.value());
+// => 25.95929409829258
 
 
+////////////////////////////
+// Example: mean.harmonic //
+////////////////////////////
+eg('mean.harmonic');
 
+var age = [19, 22, 18, 36, 25];
+
+var h_mean_age = st(age).harmonicMean();
+
+console.log(h_mean_age.value());
+// => 22.581574587625152
+
+// we can set a weight, or the amount of each 'age' occurrence
+var weight = [2, 1, 2, 5, 3];
+
+var h_mean_age = st(age).harmonicMean(weight);
+
+console.log(h_mean_age.value());
+// => 24.965542589359554
+
+///////////////////////
+// Example: variance //
+///////////////////////
+eg('variance');
+
+var age = [19, 22, 18, 36, 25];
+
+var var_age = st(age).variance();
+
+console.log(var_age.value());
+// => 
 
 
 ////////////////////////
@@ -266,10 +318,12 @@ console.log(newPrice.value());
 ////////////////////
 eg('round');
 
-var price = st([10.876, 11.001, 55.000000001]).round(10);
+var data = [10.876, 11.9999, 55.000000001];
 
-console.log(price.value());
-// => [2, 4, 6, 8]
+var rounded = st(data).round(2);
+
+console.log(rounded.value());
+// => [10.88, 12, 55]
 
 
 
