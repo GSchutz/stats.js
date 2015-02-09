@@ -20,7 +20,7 @@
 	 *
 	 * @memberOf constants
 	 *
-	 * @type {Number}
+	 * @type {Number} 
 	 */
 	var PRECISION = 10;
 
@@ -127,7 +127,7 @@
 
     	_.each(a, function(c, i){
     		if (_.isFinite(c))
-    			r = fn(r, c);
+    			r = fn(r, c, i);
   		});
   		return r;
 		}
@@ -137,7 +137,7 @@
 
     	_.each(a, function(c, i){
     		if (_.isFinite(c))
-    			a[i] = fn(a[i], b);
+    			a[i] = fn(a[i], b, i);
   		});
 		}
 
@@ -147,7 +147,7 @@
 
     	_.each(a, function(c, i){
     		if (_.isFinite(c) && _.isFinite(b[i]))
-    			a[i] = fn(a[i], b[i]);
+    			a[i] = fn(a[i], b[i], i);
   		});
 		}
 
@@ -156,7 +156,7 @@
 
     	_.each(b, function(c, i){
     		if (_.isFinite(c))
-    			b[i] = fn(a, b[i]);
+    			b[i] = fn(a, b[i], i);
   		});
 
   		return b;
@@ -328,9 +328,17 @@
 	 * 
 	 */
 	function multiply(a, b) {
-		return baseOperator(a, b, function(a, b) {
-			return a * b;
-		}, 1);
+		var args = _.toArray(arguments);
+
+		if (args.length > 2) {
+			return baseOperator(a, b, function(a, b, i) {
+				return a * b * args[2][i];
+			}, 1);
+		} else {
+			return baseOperator(a, b, function(a, b) {
+				return a * b;
+			}, 1);
+		}
 	}
 
 	/**
@@ -612,21 +620,135 @@
 		return divide(total_weight, sum(divide(weight, x)));
 	}
 
-	function variance(x, weight, type) {
+	/**
+	 * Sort the elements in the list (ascending by default). If a function `fn`
+	 * is passed, sort based on the returned value.
+	 *
+	 * @method   sortBy
+	 *
+	 * @memberOf stats
+	 *
+	 * @category math
+	 *
+	 * @param    {array}   x       The list to be sorted.
+	 * @param    {(string|Function)} fn      The `function` or string indicating the sorting type.
+	 * @param    {*=}   [thisArg] The `this` binding in the iteratio.n
+	 *
+	 * @return   {array}           The sorted array.
+	 *
+	 * @example
+	 *
+	 * var age = [19, 22, 18, 36, 25, 40];
+	 * 
+	 * var sorted = st(age).sortBy();
+	 * 
+	 * console.log(sorted.value());
+	 * // => [18, 19, 22, 25, 36, 40]
+	 * 
+	 * var sorted = st(age).sortBy(function(n) {
+	 * 	return -n;
+	 * });
+	 * 
+	 * console.log(sorted.value());
+	 * // => [40, 36, 25, 22, 19, 18]
+	 * 
+	 */
+	function sortBy(x, fn, thisArg) {
+
+		if (_.isString(fn) && fn === "desc") {
+			fn = function(n) {
+				return -n;
+			}
+		}
+
+		return _.sortBy(x, fn, thisArg);
+	}
+
+	/**
+	 * Retrieve the middle elements of a list (sorted). If the list is even,
+	 * return a list with the two elements.
+	 *
+	 * @method   middleValue
+	 *
+	 * @memberOf stats
+	 *
+	 * @category math
+	 *
+	 * @param    {array}    x The array to get the middle values.
+	 *
+	 * @return   {(string|array)}      The middle value or a list with the two nearest values.
+	 *
+	 * @example
+	 *
+	 * var age = [19, 22, 18, 36, 25, 40];
+   * 
+   * var middle = st(age).middleValue();
+   * 
+   * console.log(middle.value());
+   * // => [22, 25]
+	 * 
+	 */
+	function middleValue(x) {
 		x = linearize(x);
 
-		if (_.isString(weight) && type === undefined) {
-			type = weight;
-			weight = undefined;
-		} else if(type === undefined) {
-			type = 'unbiased';
-		}
+		x = sortBy(x);
 
 		var n = x.length;
 
-		if (type === 'unbiased') {
+		if (n % 2 !== 0) {
+			return x[(n - 1) / 2];
+		} else {
+			return [x[(n - 2) / 2], x[(n) / 2]];
+		}
+	}
+
+	function mode(x) {
+		x = linearize(x);
+
+		var t = {};
+
+		var m = [];
+		var bigger = 0;
+
+		_.each(x, function(c, i) {
+			if (t[c]) {
+				t[c] += 1;
+			} else {
+				t[c] = 1;
+			}
+
+			if (t[c] == bigger) {
+				m.push(c);
+			} else if (t[c] > bigger) {
+				m = [c];
+				bigger = t[c];
+			}
+		});
+
+		return m;
+	}
+
+	function median(x) {
+		var mv = middleValue(x);
+
+		return _.isArray(mv) ? divide( sum( mv ), 2 ) : mv;
+	}
+
+	function variance(x, weight, normalization) {
+		x = linearize(x);
+
+		if (_.isString(weight) && normalization === undefined) {
+			normalization = weight;
+			weight = undefined;
+		} else if(normalization === undefined) {
+			normalization = 'unbiased';
+		}
+
+		var n = weight ? sum(weight) : x.length;
+
+		if (normalization === 'unbiased' || normalization === 'sample') {
 			n = n - 1;
-		} else if (type === 'biased' || type === 'population') {
+		} else if (normalization === 'biased' || normalization === 'population') {
 			n = n;
 		}
 
@@ -636,7 +758,138 @@
 			return divide( sum( pow( subtract( x, m ), 2 ) ), n);
 		}
 
-		return divide( sum( multiply( weight, subtract( x, m ) ) ), n);
+		return divide( sum( multiply( weight, pow( subtract( x, m ), 2 ) ) ), n);
+	}
+
+	function std(x, weight, normalization) {
+		return sqrt( variance(x, weight, normalization) );
+	}
+
+	function covariance(x, y, weight, normalization) {
+		x = linearize(x);
+		y = linearize(y);
+
+		if (_.isString(weight) && normalization === undefined) {
+			normalization = weight;
+			weight = undefined;
+		} else if(normalization === undefined) {
+			normalization = 'unbiased';
+		}
+
+		if (x.length !== y.length) {
+			throw new RangeError("The data x and y must have the same size.");
+		}
+
+		var n = weight ? sum(weight) : x.length;
+
+		if (!normalization || normalization === 'unbiased' || normalization === 'sample') {
+			n = n - 1;
+		} else if (normalization === 'biased' || normalization === 'population') {
+			n = n;
+		}
+
+		var mx = mean(x, weight);
+		var my = mean(y, weight);
+
+		if (weight === undefined) {
+			return divide( sum( multiply( subtract( x, mx ), subtract( y, my ) ) ), n);
+		}
+
+		return divide( sum( multiply( weight, subtract( x, mx ), subtract( y, my ) ) ), n);
+	}
+
+	function correlation(x, y, weight, normalization) {
+		return divide( covariance(x, y, weight, normalization), multiply( std(x, weight, normalization), std(y, weight, normalization) ) );
+	}
+
+
+	/** Parser???? */
+
+	var PARSER_NAMESPACE = {};
+
+
+	function Parser(expression, o) {
+		o = o || {};
+		// default value for 'o' is namespace.
+		if (_.isString(o)) {
+			o = {namespace: o};
+		}
+
+		o = _.defaults(o, {
+			namespace: "scope"
+		});
+
+		// we set a namespace to limit our scope.
+		this.namespace = o.namespace;
+
+		// we save our namespace, so all variables and methds are access here.
+		var scope = PARSER_NAMESPACE[this.namespace] = {};
+
+		this.parse = function(exp) {
+			expression = (exp === undefined) ? expression : exp;
+
+			if (expression === undefined) {
+				throw new TypeError("There must be an expression to we parse something.");
+			}
+
+
+			console.log(this.cleanExpression(expression));
+			return this;
+		}
+
+		var functions = [];
+		var variables = [];
+
+		var supported_operators = ['+', '-', '*', '/', '(', ')', '[', ']', '{', '}', '%'];
+
+		this.cleanExpression = function(_exp) {
+			exp = _.deburr(_exp);
+
+			//var a = _.indexOf(exp, "=");
+
+			//func = _.trim(exp.substring(0, a));
+
+
+			var funcs = exp.split("=");
+			var parms = [];
+			var methods = [];
+			var a, b, c, d, e;
+			var last = 0;
+
+			_.each(funcs, function(f, i) {
+				// get all variables and put in array
+
+				if (i % 2 === 0) {
+					a = _.indexOf(f, "(");
+
+					if (a > -1) {
+						// is a function;
+						f = f.replace(/((\/\/.*$)|(\/\*[\s\S]*?\*\/)|(\s))/mg,'');
+
+						params = f.match(/^\s*[^\(]*\(\s*([^\)]*)\)/m)[1]
+							.split(/,/);
+
+						func = _.trim(f.substring(0, a));
+
+						scope[func] = function() {
+
+						}
+					} else {
+						// is a variable
+					}
+				}
+			});
+
+		}
+
+		this.findFunctions = function(exp) {
+
+
+		}
+
+		this.findVariables = function() {
+			
+		}
 	}
 
 	//MeanWrapper.prototype = mean.prototype;
@@ -1007,14 +1260,23 @@
 	alias(root,							['root', 'rt'], st);
 	alias(pow,							['pow', 'power'], st);
 
+	alias(sortBy,						['sortBy', 'sort'], st);
+
 	alias(mean,							['mean', 'average', 'expectation', 'ev'], st);
 	alias(geometricMean,		['meanGeometric', 'geometricMean'], st);
 	alias(harmonicMean,			['meanHarmonic', 'harmonicMean'], st);
 
+	alias(middleValue,			['middleValue', 'middle', 'mv'], st);
+	alias(median,						['median'], st);
+	alias(mode,							['mode', 'commonest'], st);
+
 	alias(variance,					['var', 'variance'], st);
+	alias(covariance,				['cov', 'covariance'], st);
+	alias(correlation,			['cor', 'corr', 'corrcoef', 'correlation', 'pearsonCorrelation'], st);
 
 	alias(linearize,				['linearize'], st);
 	alias(round,						['round'], st);
+	alias(Parser,						['Parser'], st);
 
 	mixin.call(stats, stats, st, true);
 
@@ -1038,6 +1300,7 @@
 
 
 	/*--------------------------------------------------------------------------*/
+
 
 	window.st = stats;
 }(window));

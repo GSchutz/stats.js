@@ -250,6 +250,63 @@ var h_mean_age = st(age).harmonicMean(weight);
 console.log(h_mean_age.value());
 // => 24.965542589359554
 
+/////////////////////
+// Example: sortBy //
+/////////////////////
+eg('sortBy');
+
+var age = [19, 22, 18, 36, 25, 40];
+
+var sorted = st(age).sortBy();
+
+console.log(sorted.value());
+// => [18, 19, 22, 25, 36, 40]
+
+var sorted = st(age).sortBy(function(n) {
+	return -n;
+});
+
+console.log(sorted.value());
+// => [40, 36, 25, 22, 19, 18]
+
+
+//////////////////////////
+// Example: middleValue //
+//////////////////////////
+eg('middleValue');
+
+var age = [19, 22, 18, 36, 25, 40];
+
+var middle = st(age).middleValue();
+
+console.log(middle.value());
+// => [22, 25]
+
+/////////////////////
+// Example: median //
+/////////////////////
+eg('median');
+
+var age = [19, 22, 18, 36, 25];
+
+var median_age = st(age).median();
+
+console.log(median_age.value());
+// => 22
+
+///////////////////
+// Example: mode //
+///////////////////
+eg('mode');
+
+var data = [1,2,3,4,3,2,4,5];
+
+var mode = st(data).mode();
+
+console.log(mode.value());
+// => 
+
+
 ///////////////////////
 // Example: variance //
 ///////////////////////
@@ -257,10 +314,66 @@ eg('variance');
 
 var age = [19, 22, 18, 36, 25];
 
+// the default calculation is using the unbiased estimator
 var var_age = st(age).variance();
 
 console.log(var_age.value());
-// => 
+// => 52.5
+
+var var_age = st(age).variance('biased');
+
+console.log(var_age.value());
+// => 42
+
+
+///////////////////////
+// Example: covariance //
+///////////////////////
+eg('covariance');
+
+var age = [19, 22, 18, 36, 25];
+
+var wage = [800, 1200, 800, 4000, 3000];
+
+// the default calculation is using the unbiased estimator
+var cov_age = st(age).covariance(wage);
+
+console.log(cov_age.value());
+// => 9950
+
+var cov_age = st(age).covariance(wage, 'biased');
+
+console.log(cov_age.value());
+// => 7960
+
+var cov_age = st(age).covariance(wage, [3,1,1,1,1]);
+
+console.log(cov_age.value());
+// => 7960
+
+//////////////////////////
+// Example: correlation //
+//////////////////////////
+eg('correlation');
+
+var age = [19, 22, 18, 36, 25];
+
+var wage = [800, 1200, 800, 4000, 3000];
+
+// the default calculation is using the unbiased estimator
+var correlation = st(age).correlation(wage).round(5);
+
+console.log(correlation.value());
+// => 0.94136
+
+var correlation = st(age).correlation(wage, [4,1,1,3,1]).round(5);
+
+console.log(correlation.value());
+// => 0.9735386578115699
+
+
+
+
 
 
 ////////////////////////
